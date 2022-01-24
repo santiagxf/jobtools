@@ -33,19 +33,19 @@ def yml2config(config_file_path: str) -> SimpleNamespace:
         if config_path.is_dir():
             logging.warning(f"[WARN] Configuration path '{config_file_path}' is a directory, \
                             but a yml file is expected. Looking for the first file")
-            config_file_path = next(config_path.glob('*.yml'))
+            config_path = next(config_path.glob('*.yml'))
 
-        with open(config_file_path, encoding='utf-8') as file:
-            if config_file_path.endswith(".json"):
+        with open(str(config_path), encoding='utf-8') as file:
+            if config_path.suffix == ".json":
                 config = json.load(file)
-            elif config_file_path.endswith(".yml"):
+            elif config_path.suffix == ".yml":
                 config = yaml.load(file, Loader=yaml.FullLoader)
             else:
                 TypeError(f"File {config_file_path} type is not supported. Only `JSON` or `YML`")
 
-            # This conversion allows to parse nested dictionaries into a SimpleNamespace.
-            namespace = json.loads(json.dumps(config),
-                                object_hook=lambda item: SimpleNamespace(**item))
+        # This conversion allows to parse nested dictionaries into a SimpleNamespace.
+        namespace = json.loads(json.dumps(config),
+                            object_hook=lambda item: SimpleNamespace(**item))
 
         return namespace
 
