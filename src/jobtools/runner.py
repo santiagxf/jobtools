@@ -36,5 +36,4 @@ class TaskRunner():
         else:
             args = self.task_arguments.resolve_for_method(task)
 
-        outputs = task(**args)
-        exit(outputs)
+        return task(**args)
