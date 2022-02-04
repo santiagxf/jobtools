@@ -7,11 +7,16 @@ import pathlib
 import logging
 import argparse
 import inspect
+from enum import Enum
 from types import SimpleNamespace
 from typing import Callable, Dict, Any
 
 import json
 import yaml
+
+class StringEnumArg(Enum):
+    def __str__(self):
+        return str(self.value)
 
 def yml2config(config_file_path: str) -> SimpleNamespace:
     """
@@ -80,17 +85,24 @@ def get_args_from_signature(method: Callable) -> argparse.Namespace:
     required_args_idxs = len(args_annotations) - len(fullargs.defaults if fullargs.defaults else [])
     for idx, (arg, arg_type) in enumerate(args_annotations.items()):
         is_required = idx < required_args_idxs
+        argument = f"--{arg.replace('_','-')}"
 
-        if arg_type is SimpleNamespace:
+        if issubclass(arg_type, SimpleNamespace):
             if not is_required:
                 raise ValueError("An argument of type SimpleNamespace can't be optional.\
                      Remove default values.")
-            parser.add_argument(f"--{arg.replace('_','-')}",
+            parser.add_argument(argument,
                                 dest=arg,
                                 type=yml2config,
                                 required=is_required)
+        elif issubclass(arg_type, Enum):
+            parser.add_argument(argument,
+                                dest=arg,
+                                type=arg_type,
+                                choices=list(arg_type),
+                                required=is_required)
         else:
-            parser.add_argument(f"--{arg.replace('_','-')}",
+            parser.add_argument(argument,
                                 dest=arg,
                                 type=arg_type,
                                 required=is_required)

@@ -15,5 +15,5 @@ def test_yaml_folder_loading():
     assert result.returncode == 8 # 6 + 2. The sum of the numbers is returned
 
 def test_type_conversions():
-    result = subprocess.run(["python", "tests/task_types.py", "--integer", "10" ,"--decimal" ,"10.5"], stdout=subprocess.PIPE)
+    result = subprocess.run(["python", "tests/task_types.py", "--integer", "10" ,"--decimal" ,"10.5", "--compare-strategy", "Bigger is better"], stdout=subprocess.PIPE)
     assert result.returncode == 0
