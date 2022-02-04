@@ -65,3 +65,40 @@ trips:
     destinty: 'SFO'
 budget: 700
 ```
+
+### Using enumerators as arguments
+
+You can use enumerators as paramters of your jobs. This results handy when you want to enforce specific values instead of handling strings as paramters. You can indicate a parameters as an enumerator using the class `jobtools.arguments.StringEnum` like follows:
+
+```python
+import jobtools
+from types import SimpleNamespace
+from jobtools.arguments import StringEnum
+
+class CompareStrategy(StringEnum):
+    BIGGER_BETTER = 'Bigger is better'
+    SMALLER_BETTER = 'Smaller is better'
+
+def mytask(name: str, logic: CompareStrategy = CompareStrategy.BIGGER_BETTER) -> int:
+    """
+    This is the function you want to run
+    """
+    ...
+    
+    if logic == CompareStrategy.BIGGER_BETTER:
+        ...
+
+    return ...
+
+if __name__ == "__main__":
+    tr = jobtools.runner.TaskRunner()
+    result = tr.run(mytask)
+```
+
+Then this file can be called as:
+
+```bash
+python task.py --name "my name" --logic "Bigger is better"
+```
+
+The values in the argument `logic` needs to be any of the choices in the enum indicated in the type. This is automatically enforced.

@@ -1,8 +1,8 @@
 from ast import Compare
 import jobtools
-from jobtools.arguments import StringEnumArg
+from jobtools.arguments import StringEnum
 
-class CompareStrategy(StringEnumArg):
+class CompareStrategy(StringEnum):
     BIGGER_BETTER = 'Bigger is better'
     SMALLER_BETTER = 'Smaller is better'
 
