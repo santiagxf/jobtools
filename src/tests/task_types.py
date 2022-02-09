@@ -6,7 +6,7 @@ class CompareStrategy(StringEnum):
     BIGGER_BETTER = 'Bigger is better'
     SMALLER_BETTER = 'Smaller is better'
 
-def mytask(integer: int, decimal: float, compare_strategy: CompareStrategy) -> int:
+def mytask(integer: int, decimal: float, compare_strategy: CompareStrategy, boolean: bool = False) -> int:
     assert isinstance(integer, int)
     assert isinstance(decimal, float)
     assert decimal > int(decimal)

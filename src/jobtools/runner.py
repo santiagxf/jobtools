@@ -1,8 +1,9 @@
 """
 This module provides orchestration to run and execute Python Jobs from the command line
 """
-from typing import Callable, Any
-from jobtools.arguments import TaskArguments, get_args_from_signature
+from re import X
+from typing import Callable, Any, List
+from jobtools.arguments import TaskArguments, get_args_from_signature, get_parser_from_signature
 
 class TaskRunner():
     """
@@ -10,12 +11,13 @@ class TaskRunner():
     specifiedas a callable with arguments that are automatically parsed from the signature. The
     method should return a dictionary with keys "metrics", "arguments" and "artifacts".
     """
-    def __init__(self, args: TaskArguments = None) -> None:
+    def __init__(self, args: TaskArguments = None, ignore_arguments: List[str] = []) -> None:
         """
         Initializes the TaskRunner. If `args` is indicated, then the argument's won't be parsed
         from the command line. Otherwise they will.
         """
         self.task_arguments = args
+        self.ignore_arguments = ignore_arguments
 
     def run(self, task: Callable[[], Any]) -> Any:
         """
@@ -32,8 +34,12 @@ class TaskRunner():
             `TaskRunner` object.
         """
         if self.task_arguments is None:
-            args = vars(get_args_from_signature(task))
+            args = get_args_from_signature(task, self.ignore_arguments)
         else:
             args = self.task_arguments.resolve_for_method(task)
 
         return task(**args)
+    
+    def display_help(self, task: Callable[[], Any]) -> None:
+        parser = get_parser_from_signature(task, self.ignore_arguments)
+        parser.print_help()
