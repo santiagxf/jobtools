@@ -59,6 +59,32 @@ trips:
     destinty: 'SFO'
 budget: 700
 ```
+#### Other ways to run it
+Both `jobtools` and `pyrunit` are bash scripts installed by pipx. If you environmentcan access them because of how it is set, then you have alternatives:
+
+1. As a `Python` module:
+    ```bash
+    python -m jobtools task.py MyTask --arg1 value1
+    ```
+
+2. Handling the execution yourself:
+
+    ```bash
+    python task.py --arg1 value1
+    ```
+
+    In your `Python` script add:
+
+    ```python
+    from jobtools.runner import TaskRunner
+
+    def MyMethod(arg1: str):
+      (...)
+
+    if __name__ == "__main__":
+      tr = TaskRunner()
+      tr.run(MyMethod)
+    ```
 
 ### Using enumerators as arguments
 
