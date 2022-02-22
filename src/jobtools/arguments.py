@@ -132,7 +132,7 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
                                     required=is_required,
                                     help=f"of type {arg_type.__name__}")
         else:
-            if arg_type._name == 'List':
+            if arg_type._name == 'List' or arg_type._name == 'Dict':
                 assigned_parser.add_argument(argument_flag,
                                     dest=arg,
                                     type=delimited2list,
