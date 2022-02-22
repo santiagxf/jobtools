@@ -18,6 +18,24 @@ class StringEnum(Enum):
     def __str__(self):
         return str(self.value)
 
+def delimited2list(delimited: str, delimiter: str = ',') -> List[str]:
+    """
+    Parses a delimited list encoded as string to a list of string
+
+    Parameters
+    ----------
+    delimited : str
+        The argument containing string values delimited by comma.
+    delimiter: str
+        The delimiter
+
+    Returns
+    -------
+    List[str]
+        Parsed output
+    """
+    return [item.strip() for item in delimited.split(delimiter)]
+
 def file2namespace(config_file_path: str) -> SimpleNamespace:
     """
     Loads a `YAML` or `JSON` file containing representing configuration and parses
@@ -91,28 +109,38 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
         is_required = idx < required_args_idxs
         assigned_parser = required_parser if is_required else parser
         argument_flag = f"--{arg.replace('_','-')}"
-
-        if issubclass(arg_type, SimpleNamespace):
-            if not is_required:
-                raise ValueError("An argument of type SimpleNamespace can't be optional.\
-                     Remove default values.")
-            assigned_parser.add_argument(argument_flag,
-                                dest=arg,
-                                type=file2namespace,
-                                required=is_required,
-                                help='indicated as a YAML or JSON file')
-        elif issubclass(arg_type, Enum):
-            assigned_parser.add_argument(argument_flag,
-                                dest=arg,
-                                type=arg_type,
-                                choices=list(arg_type),
-                                required=is_required)
+        if isinstance(arg_type, type):
+            if issubclass(arg_type, SimpleNamespace):
+                if not is_required:
+                    raise ValueError("An argument of type SimpleNamespace can't be optional.\
+                        Remove default values.")
+                assigned_parser.add_argument(argument_flag,
+                                    dest=arg,
+                                    type=file2namespace,
+                                    required=is_required,
+                                    help='indicated as a YAML or JSON file')
+            elif issubclass(arg_type, Enum):
+                assigned_parser.add_argument(argument_flag,
+                                    dest=arg,
+                                    type=arg_type,
+                                    choices=list(arg_type),
+                                    required=is_required)
+            else:
+                assigned_parser.add_argument(argument_flag,
+                                    dest=arg,
+                                    type=arg_type,
+                                    required=is_required,
+                                    help=f"of type {arg_type.__name__}")
         else:
-            assigned_parser.add_argument(argument_flag,
-                                dest=arg,
-                                type=arg_type,
-                                required=is_required,
-                                help=f"of type {arg_type.__name__}")
+            if arg_type._name == 'List':
+                assigned_parser.add_argument(argument_flag,
+                                    dest=arg,
+                                    type=delimited2list,
+                                    required=is_required,
+                                    help=f"indicated as a comma separted string")
+            else:
+                raise TypeError(f'Type {arg_type} is not supported in this version of jobtools')
+
 
     return parser
 
