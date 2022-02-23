@@ -21,5 +21,5 @@ def test_lists():
     assert result.returncode == 2 # len of the list
 
 def test_type_conversions():
-    result = subprocess.run(["python", "tests/task_types.py", "--integer", "10" ,"--decimal" ,"10.5", "--compare-strategy", "Bigger is better"], stdout=subprocess.PIPE)
+    result = subprocess.run(["python", "tests/task_types.py", "--integer", "10" ,"--decimal" ,"10.5", "--compare-strategy", "Bigger is better", "--flag", "true"], stdout=subprocess.PIPE)
     assert result.returncode == 0

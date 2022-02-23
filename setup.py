@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="jobtools",
-    version="0.0.10",
+    version="0.0.11",
     author="Facundo Santiago",
     description="Facilitates the use of Python from the command line",
     url = 'https://github.com/santiagxf/jobtools',
@@ -19,7 +19,8 @@ setuptools.setup(
     python_requires='>=3.6',                
     packages=setuptools.find_packages(where='src', exclude=("tests",)),   
     package_dir={'':'src'},  
-    scripts=['./src/scripts/pyrunit', './src/scripts/jobtools'],
+    scripts=['./src/scripts/pyrunit', 
+             './src/scripts/jobtools'],
     include_package_data=True,   
     install_requires=[
         'PyYAML',

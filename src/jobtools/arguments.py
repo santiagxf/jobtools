@@ -18,6 +18,36 @@ class StringEnum(Enum):
     def __str__(self):
         return str(self.value)
 
+def str2bool(value: str) -> bool:
+    """
+    Parses an string representing a boolean value to its corresponding
+    value.
+
+    Parameters
+    ----------
+    value : str
+        The boolean value as string. Possible values are
+        'yes', 'true', 't', 'y', '1', 'no', 'false', 'f', 'n', '0'
+
+    Returns
+    -------
+    bool
+        The corrresponding boolean value
+
+    Raises
+    ------
+    argparse.ArgumentTypeError
+        If values are not in the possible values.
+    """
+    if isinstance(value, bool):
+        return value
+    if value.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif value.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def delimited2list(delimited: str, delimiter: str = ',') -> List[str]:
     """
     Parses a delimited list encoded as string to a list of string
@@ -125,6 +155,12 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
                                     type=arg_type,
                                     choices=list(arg_type),
                                     required=is_required)
+            elif issubclass(arg_type, bool):
+                assigned_parser.add_argument(argument_flag,
+                                    dest=arg,
+                                    type=str2bool,
+                                    required=is_required,
+                                    help=f"of type {arg_type.__name__}")
             else:
                 assigned_parser.add_argument(argument_flag,
                                     dest=arg,
@@ -132,15 +168,17 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
                                     required=is_required,
                                     help=f"of type {arg_type.__name__}")
         else:
-            if arg_type._name == 'List' or arg_type._name == 'Dict':
-                assigned_parser.add_argument(argument_flag,
-                                    dest=arg,
-                                    type=delimited2list,
-                                    required=is_required,
-                                    help=f"indicated as a comma separted string")
-            else:
+            try:
+                if arg_type._name == 'List' or arg_type._name == 'Dict':
+                    assigned_parser.add_argument(argument_flag,
+                                        dest=arg,
+                                        type=delimited2list,
+                                        required=is_required,
+                                        help=f"indicated as a comma separted string")
+                else:
+                    raise TypeError(f'Type {arg_type} is not supported in this version of jobtools')
+            except RuntimeError:
                 raise TypeError(f'Type {arg_type} is not supported in this version of jobtools')
-
 
     return parser
 
