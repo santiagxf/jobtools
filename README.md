@@ -1,3 +1,5 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Latest Release][release badge]][release]
 # jobtools
 
 This package contains a convenient way to invoke `Python` code from the command line to execute jobs of any kind.
@@ -140,3 +142,7 @@ arguments:
 optional arguments:
   --boolean BOOLEAN     of type bool
 ```
+
+## Contributing
+
+Ideas and contributions are more than welcome!
