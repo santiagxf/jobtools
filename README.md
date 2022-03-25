@@ -1,5 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Latest Release][release badge]][release]
+[![CI/CD](https://github.com/santiagxf/jobtools/actions/workflows/python-publish.yml/badge.svg)](https://github.com/santiagxf/jobtools/actions/workflows/python-publish.yml)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/santiagxf/jobtools)
 # jobtools
 
 This package contains a convenient way to invoke `Python` code from the command line to execute jobs of any kind.
