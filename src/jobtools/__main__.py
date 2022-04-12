@@ -1,6 +1,6 @@
 import argparse
-from ctypes import ArgumentError
 import sys
+import importlib
 from pathlib import Path
 from importlib.machinery import SourceFileLoader
 from jobtools.runner import TaskRunner
@@ -15,12 +15,19 @@ if __name__ == "__main__":
         parser.add_argument("MyTask", help='name of the function to call')
         parser.parse_known_args()
     
-    if not Path(module_path).exists():
-        raise FileNotFoundError(module_path)
-
-    module_name = Path(module_path).stem
-    modulevar = SourceFileLoader(module_name, module_path).load_module()
+    if module_path.endswith('.py'):
+        if not Path(module_path).exists():
+            raise FileNotFoundError(module_path)
+        
+        module_name = Path(module_path).stem
+        modulevar = SourceFileLoader(module_name, module_path).load_module()
+    else:
+        module_spec = importlib.util.find_spec(module_path)
+        modulevar = module_spec.loader.load_module()
+    
     callable_func = getattr(modulevar, method)
 
     tr = TaskRunner(ignore_arguments = sys.argv[1:3])
     tr.run(callable_func)
+    
+    exit(0)

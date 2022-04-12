@@ -41,5 +41,13 @@ class TaskRunner():
         return task(**args)
     
     def display_help(self, task: Callable[[], Any]) -> None:
+        """
+        Displays the help for a given method
+
+        Parameters
+        ----------
+        task : Callable[[], Any]
+            The task or method you want to display help for.
+        """
         parser = get_parser_from_signature(task, self.ignore_arguments)
         parser.print_help()
