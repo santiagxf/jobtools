@@ -121,6 +121,22 @@ pyrunit task.py mytask --name "my name" --logic "Bigger is better"
 
 The values in the argument `logic` needs to be any of the choices in the enum indicated in the type. This is automatically enforced.
 
+### Running functions in packages/modules (new in version 0.0.12)
+
+Sometimes, you code is packaged inside of a Python package or module. In the following example, assuming that you have a module that can be loaded from the path you are currently located, you can use `jobtools` to run them using the following sintax:
+
+```bash
+pyrunit mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
+```
+
+or which is equivalent:
+
+```bash
+python -m jobtools mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
+```
+
+> The package should be resolvable from the location you are invoking the method. If it is a local package, then you should be placed outside of the package itself.
+
 ### Displaying help
 
 You can display help about how to run an specific function by using the flag `--help` or `-h`. Note how argument typing help is also provided including: possible values for enums, type hints and optional vs required arguments.
