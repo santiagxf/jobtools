@@ -1,7 +1,6 @@
 """
 This module provides orchestration to run and execute Python Jobs from the command line
 """
-from re import X
 from typing import Callable, Any, List
 from jobtools.arguments import TaskArguments, get_args_from_signature, get_parser_from_signature
 
@@ -15,6 +14,16 @@ class TaskRunner():
         """
         Initializes the TaskRunner. If `args` is indicated, then the argument's won't be parsed
         from the command line. Otherwise they will.
+
+        Parameters
+        ----------
+        args: TaskArguments
+            Use args when you are using `TaskRunner` directly in Python instead of from the command
+            line. When this argument is indicated, no parsing from command line will happen.
+        ignore_arguments: List[str]
+            Arguments that will be present in the command line but should not be used or enforced
+            for the task that will be executed. Defaults to none. This parameter has no effect if
+            `args` is indicated.
         """
         self.task_arguments = args
         self.ignore_arguments = ignore_arguments

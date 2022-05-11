@@ -1,2 +1,5 @@
 value1: 2
 value2: 6
+group1:
+  value1: 2
+  value2: 6

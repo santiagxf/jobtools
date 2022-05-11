@@ -1,8 +1,8 @@
 import argparse
-import sys
 import importlib
-from pathlib import Path
+import sys
 from importlib.machinery import SourceFileLoader
+from pathlib import Path
 from jobtools.runner import TaskRunner
 
 if __name__ == "__main__":

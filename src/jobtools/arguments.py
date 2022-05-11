@@ -14,7 +14,41 @@ from typing import Callable, Dict, Any, List
 import json
 import yaml
 
+class ExtNamespace(SimpleNamespace):
+    """
+    Extends the functionality of a SimpleNamespace for holding configuration.
+    """
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+    def __iter__(self):
+        return self.__dict__
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Returns a dictionary representation of the object.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary of values
+        """
+        def _to_dict(ns: SimpleNamespace):
+            converted = ns.__dict__
+
+            for key in converted.keys():
+                if isinstance(converted[key], SimpleNamespace):
+                    converted[key] = _to_dict(converted[key])
+            
+            return converted
+
+        return _to_dict(self)
+
+
 class StringEnum(Enum):
+    """
+    Represents enums with string associated values.
+    """
     def __str__(self):
         return str(self.value)
 
@@ -27,7 +61,7 @@ def str2bool(value: str) -> bool:
     ----------
     value : str
         The boolean value as string. Possible values are
-        'yes', 'true', 't', 'y', '1', 'no', 'false', 'f', 'n', '0'
+        ['yes', 'true', 't', 'y', '1'/'-1'] or ['no', 'false', 'f', 'n', '0']
 
     Returns
     -------
@@ -41,12 +75,12 @@ def str2bool(value: str) -> bool:
     """
     if isinstance(value, bool):
         return value
-    if value.lower() in ('yes', 'true', 't', 'y', '1'):
+    if value.lower() in ('yes', 'true', 't', 'y', '1', '-1'):
         return True
     elif value.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError(f"Unable to understand '{value}' as boolean.")
 
 def delimited2list(delimited: str, delimiter: str = ',') -> List[str]:
     """
@@ -66,19 +100,24 @@ def delimited2list(delimited: str, delimiter: str = ',') -> List[str]:
     """
     return [item.strip() for item in delimited.split(delimiter)]
 
-def file2namespace(config_file_path: str) -> SimpleNamespace:
+def file2namespace(config_file_path: str, default_extension: str = 'yml') -> ExtNamespace:
     """
     Loads a `YAML` or `JSON` file containing representing configuration and parses
-    it as a `SimpleNamespace` object.
+    it as a `SimpleNamespace` object. If the path is a directory, the first file with extension
+    `YAML` or `JSON` is loaded.
 
     Parameters
     ----------
     config_file_path : str
         Path where the `YAML` or `JSON` file is located.
 
+    default_extension: str
+        If `config_file_path` is a directory, indicates the extension of the file to look for.
+        Defautls to 'yml`.
+
     Returns
     -------
-    SimpleNamespace
+    ExtNamespace
         The given configuration parsed as a namespace.
     """
     try:
@@ -86,25 +125,28 @@ def file2namespace(config_file_path: str) -> SimpleNamespace:
         if config_path.is_dir():
             logging.warning(f"[WARN] Configuration path '{config_file_path}' is a directory, \
                             but a yml file is expected. Looking for the first file")
-            config_path = next(config_path.glob('*.yml'))
+            config_path = next(config_path.glob(f'*.{default_extension}'))
+
+            if not config_path:
+                raise FileNotFoundError(f"Unable to find a `{default_extension}` file under directory {config_file_path}")
 
         with open(str(config_path), encoding='utf-8') as file:
             if config_path.suffix == ".json":
                 config = json.load(file)
-            elif config_path.suffix == ".yml":
+            elif config_path.suffix == ".yml" or config_path.suffix == ".yaml":
                 config = yaml.load(file, Loader=yaml.FullLoader)
             else:
                 TypeError(f"File {config_file_path} type is not supported. Only `JSON` or `YML`")
 
-        # This conversion allows to parse nested dictionaries into a SimpleNamespace.
+        # This conversion allows to parse nested dictionaries into a Namespace.
         namespace = json.loads(json.dumps(config),
-                            object_hook=lambda item: SimpleNamespace(**item))
-
+                               object_hook=lambda item: ExtNamespace(**item))
         return namespace
 
-    except ValueError as err:
+    except RuntimeError as err:
         msg = f"When loading the configuration file from '{config_file_path}', \
                 the following error happened: {err}"
+        print(msg)
         raise argparse.ArgumentTypeError(msg)
 
 def get_parser_from_signature(method: Callable, extra_arguments: List[str] = []) -> argparse.ArgumentParser:
@@ -120,6 +162,11 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
     ----------
     method: Callable
         The method the arguments should be extracted from.
+    extra_arguments: List[str]
+        Indicates extra arguments that are not present in the signature but should be
+        included in the returned parser. Use this argument to include other paramters
+        that are indicated in the command line but they are used for another purpoise
+        and not meant to be sent to the method.
 
     Returns
     -------
@@ -255,7 +302,7 @@ class TaskArguments():
 
             if arg_type is type(self.args[arg_name]):
                 parsed_args[arg_name] = self.args[arg_name]
-            elif arg_type is SimpleNamespace and isinstance(self.args[arg_name], str):
+            elif issubclass(arg_type, SimpleNamespace) and self.args[arg_name] is str:
                 parsed_args[arg_name] = file2namespace(self.args[arg_name])
             else:
                 raise ValueError(f"Parameter {arg_name} is expecting {arg_type} but got \
