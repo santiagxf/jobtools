@@ -44,7 +44,7 @@ def mytask(name: str, max_buffer: int, params: SimpleNamespace, optional_arg: in
 Then this file can be called using the command `jobtools` or `pyrunit` (they are aliases):
 
 ```bash
-pyrunit task.py mytask --name "my name" --max-buffer 1024 --params params.yml
+jobtools task.py mytask --name "my name" --max-buffer 1024 --params params.yml
 ```
 
 or
@@ -116,7 +116,7 @@ def mytask(name: str, logic: CompareStrategy = CompareStrategy.BIGGER_BETTER) ->
 Then this file can be called as:
 
 ```bash
-pyrunit task.py mytask --name "my name" --logic "Bigger is better"
+jobtools task.py mytask --name "my name" --logic "Bigger is better"
 ```
 
 The values in the argument `logic` needs to be any of the choices in the enum indicated in the type. This is automatically enforced.
@@ -126,7 +126,7 @@ The values in the argument `logic` needs to be any of the choices in the enum in
 Sometimes, you code is packaged inside of a Python package or module. In the following example, assuming that you have a module that can be loaded from the path you are currently located, you can use `jobtools` to run them using the following sintax:
 
 ```bash
-pyrunit mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
+jobtools mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
 ```
 
 or which is equivalent:
@@ -142,9 +142,9 @@ python -m jobtools mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
 You can display help about how to run an specific function by using the flag `--help` or `-h`. Note how argument typing help is also provided including: possible values for enums, type hints and optional vs required arguments.
 
 ```bash
-> pyrunit task.py mytask --help
+> jobtools task.py mytask --help
 
-usage: pyrunit task.py mytask [-h] --integer INTEGER --decimal DECIMAL --compare-strategy {Bigger is better,Smaller is better} [--boolean BOOLEAN]
+usage: jobtools task.py mytask [-h] --integer INTEGER --decimal DECIMAL --compare-strategy {Bigger is better,Smaller is better} [--boolean BOOLEAN]
 
 positional arguments:
   task_types.py
