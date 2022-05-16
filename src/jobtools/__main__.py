@@ -10,7 +10,7 @@ if __name__ == "__main__":
         module_path = sys.argv[1]
         method = sys.argv[2]
     else:
-        parser = argparse.ArgumentParser('pyrunit')
+        parser = argparse.ArgumentParser('jobtools')
         parser.add_argument("file.py", help='path to the Python source file')
         parser.add_argument("MyTask", help='name of the function to call')
         parser.parse_known_args()

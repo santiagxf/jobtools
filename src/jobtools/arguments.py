@@ -44,6 +44,59 @@ class ExtNamespace(SimpleNamespace):
 
         return _to_dict(self)
 
+    @classmethod
+    def load(cls, path: str, default_extension: str = 'yml') -> 'ExtNamespace':
+        """
+        Loads a namespace from a `YAML` or `JSON` file
+
+        Parameters
+        ----------
+        path : str
+            Path of the file to load. If a folder is provided,
+            then the first file is loaded with extension `default_extension`.
+        
+        default_extension: str
+            If `path` is a directory, indicates the extension of the file to look for.
+            Defautls to 'yml`.
+
+        Returns
+        -------
+        ExtNamespace
+            The namespace representing the given file.
+
+        Raises
+        ------
+        TypeError
+            If `path` has an unsupported file extension.
+        """
+        return file2namespace(path, default_extension)
+    
+    def save(self, path: str):
+        """
+        Saves the namespace to a file. Support files with
+        extensions `YML` or `JSON`.
+
+        Parameters
+        ----------
+        path : str
+            File name where to place the configuration, including extension. Supported
+            extensions are `JSON` and `YML`.
+
+        Raises
+        ------
+        TypeError
+            If `config_file_path` has an unsupported file extension.
+        """
+
+        full_path = pathlib.Path(path)
+
+        with open(str(full_path), 'w') as outfile:
+            if full_path.suffix == ".json":
+                json.dump(self.to_dict(), outfile, indent=4)
+            elif full_path.suffix == ".yml" or full_path.suffix == ".yaml":
+                yaml.dump(self.to_dict(), outfile, default_flow_style=False)
+            else:
+                TypeError(f"File {full_path} type is not supported. Only `JSON` or `YML`")
 
 class StringEnum(Enum):
     """
@@ -119,6 +172,11 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Ext
     -------
     ExtNamespace
         The given configuration parsed as a namespace.
+
+    Raises
+    ------
+    TypeError
+        If `config_file_path` has an unsupported file extension.
     """
     try:
         config_path = pathlib.Path(config_file_path)
@@ -173,7 +231,7 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
     argparse.ArgumentParser
         The parser to get the arguments from the signature.
     """
-    parser = argparse.ArgumentParser("pyrunit")
+    parser = argparse.ArgumentParser("jobtools")
     required_parser = parser.add_argument_group('required arguments')
     fullargs = inspect.getfullargspec(method)
     args_annotations = dict(filter(lambda key: key[0] != 'return', fullargs.annotations.items()))
