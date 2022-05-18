@@ -10,6 +10,7 @@ This package contains a convenient way to invoke `Python` code from the command 
 To run a `Python` file from the command line you can do something like `python task.py`, considering that you have a file called `task.py`. However, if you routine needs parameters, then you have to do all the parsing of the arguments by hand. This has some limitations:
 - Naming conventions in bash or Windows Command line are different. For instance parameters in bash are usually indicated as `--my-parameter` while in `Python` the `-` character is not valid. 
 - Type parsing has to be done by hand with `argparser`.
+- It requires to handle how the file is invoked.
 - Complex types are hard to indicate.
 
 This leads to a lot of repetitive code being done each time you want to execute code in `Python` from the command line. This library seeks to help to do:
@@ -19,7 +20,7 @@ This leads to a lot of repetitive code being done each time you want to execute 
  - Support for some complex types.
 
 ## How 
-The code that you want to execute will be indicated in a callable function. Arguments for the callable are automatically parsed from the command line and enforced depending on if they are required or not. Parameters with a default value are inferred to be optional while parameters without one are marked required. Type conversion is automatically handled. Special type conversion is supported for aruments of type `SimpleNamespace` which can be passed as arguments using `YML` or `JSON` files. Enumerators are also supported as arguments. See [Using enumerators as arguments](#Using-enumerators-as-arguments) for details.
+The code that you want to execute will be indicated in a callable function. Arguments for the callable are automatically parsed from the command line and enforced depending on if they are required or not. Parameters with a default value are inferred to be optional while parameters without one are marked required. Type conversion is automatically handled using type hints. Special type conversion is supported for arguments of type `SimpleNamespace` which can be passed as arguments using `YML` or `JSON` files. Enumerators are also supported as arguments. See [Using enumerators as arguments](#Using-enumerators-as-arguments) for details.
 
 ## Usage
 
@@ -50,7 +51,7 @@ jobtools task.py mytask --name "my name" --max-buffer 1024 --params params.yml
 or
 
 ```bash
-pyrunit task.py mytask --name "my name" --max-buffer 1024 --params params.yml --optional-arg 15
+jobtools task.py mytask --name "my name" --max-buffer 1024 --params params.yml --optional-arg 15
 ```
 
 The corresponding `YML` file would be like:
@@ -59,11 +60,11 @@ The corresponding `YML` file would be like:
 ```yaml
 trips:
     origin: 'BUE'
-    destinty: 'SFO'
+    destiny: 'SFO'
 budget: 700
 ```
 #### Other ways to run it
-Both `jobtools` and `pyrunit` are bash scripts installed by pipx. If you environmentcan access them because of how it is set, then you have alternatives:
+Both `jobtools` and `pyrunit` are bash scripts installed by pipx. If you environment cannot access them because of how it is set, then you have alternatives:
 
 1. As a `Python` module:
     ```bash
@@ -136,6 +137,27 @@ python -m jobtools mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
 ```
 
 > The package should be resolvable from the location you are invoking the method. If it is a local package, then you should be placed outside of the package itself.
+
+### Loading and saving configuration files from `YAML` and `JSON` (new in version 0.0.14)
+
+`jobtools` extends the support of `SimpleNamespace` in the class `ExtNamespace` which supports loading and writing configuration files directly. This is useful when authoring the configuration files in Jupyter Notebooks for instance. You can construct the configuration and save it like this:
+
+```python
+from jobtools.arguments import ExtNamespace
+
+params = ExtNamespace()
+params.argument1 = 123
+params.argument2 = "this is a string"
+params.save('params.yml')
+```
+
+In the same way, loading can be done with:
+
+```python
+from jobtools.arguments import ExtNamespace
+
+ExtNamespace.load('params.yml)
+```
 
 ### Displaying help
 
