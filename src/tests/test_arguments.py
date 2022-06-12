@@ -1,8 +1,8 @@
 import os
-from jobtools.arguments import ExtNamespace
+from jobtools.arguments import ParamsNamespace
 
 def test_yaml_loading():
-    config = ExtNamespace.load('tests/params.yml')
+    config = ParamsNamespace.load('tests/params.yml')
     
     assert config is not None
     assert config.value1 == 2
@@ -12,8 +12,8 @@ def test_yaml_loading():
 
 def test_yaml_saving():
     file_path='/tmp/params.yml'
-    config = ExtNamespace.load('tests/params.yml')
+    config = ParamsNamespace.load('tests/params.yml')
     config.save(file_path)
-    config = ExtNamespace.load(file_path)
+    config = ParamsNamespace.load(file_path)
 
     assert os.path.exists(file_path)

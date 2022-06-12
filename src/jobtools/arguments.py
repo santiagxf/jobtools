@@ -14,7 +14,7 @@ from typing import Callable, Dict, Any, List
 import json
 import yaml
 
-class ExtNamespace(SimpleNamespace):
+class ParamsNamespace(SimpleNamespace):
     """
     Extends the functionality of a SimpleNamespace for holding configuration.
     """
@@ -45,7 +45,7 @@ class ExtNamespace(SimpleNamespace):
         return _to_dict(self)
 
     @classmethod
-    def load(cls, path: str, default_extension: str = 'yml') -> 'ExtNamespace':
+    def load(cls, path: str, default_extension: str = 'yml') -> 'ParamsNamespace':
         """
         Loads a namespace from a `YAML` or `JSON` file
 
@@ -61,7 +61,7 @@ class ExtNamespace(SimpleNamespace):
 
         Returns
         -------
-        ExtNamespace
+        ParamsNamespace
             The namespace representing the given file.
 
         Raises
@@ -153,7 +153,7 @@ def delimited2list(delimited: str, delimiter: str = ',') -> List[str]:
     """
     return [item.strip() for item in delimited.split(delimiter)]
 
-def file2namespace(config_file_path: str, default_extension: str = 'yml') -> ExtNamespace:
+def file2namespace(config_file_path: str, default_extension: str = 'yml') -> ParamsNamespace:
     """
     Loads a `YAML` or `JSON` file containing representing configuration and parses
     it as a `SimpleNamespace` object. If the path is a directory, the first file with extension
@@ -170,7 +170,7 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Ext
 
     Returns
     -------
-    ExtNamespace
+    ParamsNamespace
         The given configuration parsed as a namespace.
 
     Raises
@@ -198,7 +198,7 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Ext
 
         # This conversion allows to parse nested dictionaries into a Namespace.
         namespace = json.loads(json.dumps(config),
-                               object_hook=lambda item: ExtNamespace(**item))
+                               object_hook=lambda item: ParamsNamespace(**item))
         return namespace
 
     except RuntimeError as err:
@@ -235,6 +235,10 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
     required_parser = parser.add_argument_group('required arguments')
     fullargs = inspect.getfullargspec(method)
     args_annotations = dict(filter(lambda key: key[0] != 'return', fullargs.annotations.items()))
+
+    if len(args_annotations) != len(fullargs.args):
+        missing_annotations = [arg for arg in fullargs.args if arg not in fullargs.annotations.keys()]
+        ValueError(f'Arguments {",".join(missing_annotations)}, in method {str(method)}, do not have type annotations. Please add them.')
 
     for extra_arg in extra_arguments:
         parser.add_argument(extra_arg, type=str, )
@@ -348,6 +352,11 @@ class TaskArguments():
         fullargs = inspect.getfullargspec(method)
         args_annotations = dict(filter(lambda key: key[0] != 'return',
                                 fullargs.annotations.items()))
+
+        if len(args_annotations) != len(fullargs.args):
+            missing_annotations = [arg for arg in fullargs.args if arg not in fullargs.annotations.keys()]
+            ValueError(f'Arguments {",".join(missing_annotations)}, in method {str(method)}, do not have type annotations. Please add them.')
+            
         parsed_args = {}
 
         required_args_idxs = len(args_annotations) \

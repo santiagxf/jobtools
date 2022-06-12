@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="jobtools",
-    version="0.0.14",
+    version="0.0.15",
     author="Facundo Santiago",
     description="Facilitates the use of Python from the command line",
     url = 'https://github.com/santiagxf/jobtools',

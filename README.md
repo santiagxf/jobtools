@@ -22,6 +22,10 @@ This leads to a lot of repetitive code being done each time you want to execute 
 ## How 
 The code that you want to execute will be indicated in a callable function. Arguments for the callable are automatically parsed from the command line and enforced depending on if they are required or not. Parameters with a default value are inferred to be optional while parameters without one are marked required. Type conversion is automatically handled using type hints. Special type conversion is supported for arguments of type `SimpleNamespace` which can be passed as arguments using `YML` or `JSON` files. Enumerators are also supported as arguments. See [Using enumerators as arguments](#Using-enumerators-as-arguments) for details.
 
+### How is `jobtools` different from [`click`](https://click.palletsprojects.com/)?
+
+At first, `jobtools` may look very similar to `click`. However, `click` is intended to create command line tools using Python. That means that the code that you are writing has to be modified to meet `click` requirements. You source code is coupled with the way `click` works (you will import `click` in your namespace, add decorators, etc). On the other hand, `jobtools` is intended to be  generic way to execute Python code from the command line. No modifications shall be made to the source code in order to execute the code using `jobtools` (besides adding type hints). Some advance features, like enums, may be facilitated by importing `jobtools` but it is not required as you can implement enumerators in your code in a native Pythonic way. Then, you code can be completely decoupled from `jobtools`.
+
 ## Usage
 
 `task.py`
@@ -130,22 +134,16 @@ Sometimes, you code is packaged inside of a Python package or module. In the fol
 jobtools mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
 ```
 
-or which is equivalent:
-
-```bash
-python -m jobtools mypkg.mymodule.mysubmod my_task --arg1 value1 --arg2 value2
-```
-
 > The package should be resolvable from the location you are invoking the method. If it is a local package, then you should be placed outside of the package itself.
 
 ### Loading and saving configuration files from `YAML` and `JSON` (new in version 0.0.14)
 
-`jobtools` extends the support of `SimpleNamespace` in the class `ExtNamespace` which supports loading and writing configuration files directly. This is useful when authoring the configuration files in Jupyter Notebooks for instance. You can construct the configuration and save it like this:
+`jobtools` extends the support of `SimpleNamespace` in the class `ParamsNamespace` which supports loading and writing configuration files directly. This is useful when authoring the configuration files in Jupyter Notebooks for instance. You can construct the configuration and save it like this:
 
 ```python
-from jobtools.arguments import ExtNamespace
+from jobtools.arguments import ParamsNamespace
 
-params = ExtNamespace()
+params = ParamsNamespace()
 params.argument1 = 123
 params.argument2 = "this is a string"
 params.save('params.yml')
@@ -154,10 +152,12 @@ params.save('params.yml')
 In the same way, loading can be done with:
 
 ```python
-from jobtools.arguments import ExtNamespace
+from jobtools.arguments import ParamsNamespace
 
-ExtNamespace.load('params.yml)
+ParamsNamespace.load('params.yml)
 ```
+
+> Note that this functionality is added mostly for helping unit testing or fast creation of configuration files. We do not recommend loading configuration files manually, but to rely on using parameters of type `SimpleNamespace` which `jobtools` automatically map to configuration files.
 
 ### Displaying help
 
