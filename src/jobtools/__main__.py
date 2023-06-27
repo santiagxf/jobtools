@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     callable_func = getattr(modulevar, METHOD_NAME)
 
-    tr = TaskRunner(name=METHOD_NAME, ignore_arguments = SYS_ARGS, debug=DEBUG)
+    tr = TaskRunner(name=METHOD_NAME, ignore_arguments=SYS_ARGS, debug=DEBUG)
     tr.run(callable_func)
 
     exit(0)
