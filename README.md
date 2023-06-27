@@ -5,6 +5,10 @@
 
 This package contains a convenient way to invoke `Python` code from the command line to execute jobs of any kind.
 
+```bash
+jobtools my_code.py my_method --arg1 value1 --arg2 true --arg3 params.yml
+```
+
 ## General idea
 
 To run a `Python` file from the command line you can do something like `python task.py`, considering that you have a file called `task.py`. However, if you routine needs parameters, then you have to do all the parsing of the arguments by hand. This has some limitations:
@@ -68,6 +72,7 @@ trips:
 budget: 700
 ```
 #### Other ways to run it
+
 Both `jobtools` and `pyrunit` are bash scripts installed by pipx. If you environment cannot access them because of how it is set, then you have alternatives:
 
 1. As a `Python` module:
@@ -174,6 +179,7 @@ positional arguments:
 
 arguments:
   -h, --help            show this help message and exit
+  --debug               displays debug information about the execution
   --integer INTEGER     of type int
   --decimal DECIMAL     of type float
   --compare-strategy {Bigger is better,Smaller is better}
