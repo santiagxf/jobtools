@@ -1,0 +1,9 @@
+name: dev-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8.5
+  - pip
+  - pip:
+    - pyyaml
+    - pytest

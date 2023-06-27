@@ -10,6 +10,7 @@ import inspect
 from enum import Enum
 from types import SimpleNamespace
 from typing import Callable, Dict, Any, List
+from jobtools.joblogger import get_logger
 
 import json
 import yaml
@@ -22,7 +23,7 @@ class ParamsNamespace(SimpleNamespace):
         super().__init__(**kwargs)
 
     def __iter__(self):
-        return self.__dict__
+        return self.__dict__.__iter__()
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -70,7 +71,7 @@ class ParamsNamespace(SimpleNamespace):
             If `path` has an unsupported file extension.
         """
         return file2namespace(path, default_extension)
-    
+
     def save(self, path: str):
         """
         Saves the namespace to a file. Support files with
@@ -90,13 +91,13 @@ class ParamsNamespace(SimpleNamespace):
 
         full_path = pathlib.Path(path)
 
-        with open(str(full_path), 'w') as outfile:
+        with open(str(full_path), 'w', encoding='utf8') as outfile:
             if full_path.suffix == ".json":
                 json.dump(self.to_dict(), outfile, indent=4)
             elif full_path.suffix == ".yml" or full_path.suffix == ".yaml":
                 yaml.dump(self.to_dict(), outfile, default_flow_style=False)
             else:
-                TypeError(f"File {full_path} type is not supported. Only `JSON` or `YML`")
+                raise TypeError(f"File {full_path} type is not supported. Only `JSON` or `YML`")
 
 class StringEnum(Enum):
     """
@@ -119,7 +120,7 @@ def str2bool(value: str) -> bool:
     Returns
     -------
     bool
-        The corrresponding boolean value
+        The corresponding boolean value
 
     Raises
     ------
@@ -166,7 +167,7 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Par
 
     default_extension: str
         If `config_file_path` is a directory, indicates the extension of the file to look for.
-        Defautls to 'yml`.
+        Defaults to 'yml`.
 
     Returns
     -------
@@ -181,12 +182,13 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Par
     try:
         config_path = pathlib.Path(config_file_path)
         if config_path.is_dir():
-            logging.warning(f"[WARN] Configuration path '{config_file_path}' is a directory, \
-                            but a yml file is expected. Looking for the first file")
+            get_logger().warning(f"Configuration path '{config_file_path}' is a directory, "
+                                 "but a yml file is expected. Looking for the first file")
             config_path = next(config_path.glob(f'*.{default_extension}'))
 
             if not config_path:
-                raise FileNotFoundError(f"Unable to find a `{default_extension}` file under directory {config_file_path}")
+                raise FileNotFoundError(f"Unable to find a `{default_extension}` file under "
+                                        "directory {config_file_path}")
 
         with open(str(config_path), encoding='utf-8') as file:
             if config_path.suffix == ".json":
@@ -194,7 +196,8 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Par
             elif config_path.suffix == ".yml" or config_path.suffix == ".yaml":
                 config = yaml.load(file, Loader=yaml.FullLoader)
             else:
-                TypeError(f"File {config_file_path} type is not supported. Only `JSON` or `YML`")
+                raise TypeError(f"File {config_file_path} type is not supported. Only `JSON` "
+                                "or `YML`")
 
         # This conversion allows to parse nested dictionaries into a Namespace.
         namespace = json.loads(json.dumps(config),
@@ -207,12 +210,12 @@ def file2namespace(config_file_path: str, default_extension: str = 'yml') -> Par
         print(msg)
         raise argparse.ArgumentTypeError(msg)
 
-def get_parser_from_signature(method: Callable, extra_arguments: List[str] = []) -> argparse.ArgumentParser:
+def get_parser_from_signature(method: Callable, extra_arguments: List[str] = None) -> argparse.ArgumentParser:
     """
     Automatically parses all the arguments to match an specific method. The method should
     implement type hinting in order for this to work. All arguments required by the method
     will be also required by the parser. To match bash conventions, arguments with underscore
-    will be parsed as arguments with upperscore. For instance `from_path` will be requested
+    will be parsed as arguments with dash (`-`). For instance `from_path` will be requested
     as `--from-path`. Signature arguments with type `SimpleNamespace` have to be specified
     using a `YAML` file.
 
@@ -222,8 +225,8 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
         The method the arguments should be extracted from.
     extra_arguments: List[str]
         Indicates extra arguments that are not present in the signature but should be
-        included in the returned parser. Use this argument to include other paramters
-        that are indicated in the command line but they are used for another purpoise
+        included in the returned parser. Use this argument to include other parameters
+        that are indicated in the command line but they are used for another purpose
         and not meant to be sent to the method.
 
     Returns
@@ -231,23 +234,32 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
     argparse.ArgumentParser
         The parser to get the arguments from the signature.
     """
+    logger = get_logger()
     parser = argparse.ArgumentParser("jobtools")
     required_parser = parser.add_argument_group('required arguments')
     fullargs = inspect.getfullargspec(method)
     args_annotations = dict(filter(lambda key: key[0] != 'return', fullargs.annotations.items()))
 
+    for arg in fullargs.args:
+        logger.debug(f'Signature argument: {arg}')
+
     if len(args_annotations) != len(fullargs.args):
-        missing_annotations = [arg for arg in fullargs.args if arg not in fullargs.annotations.keys()]
-        ValueError(f'Arguments {",".join(missing_annotations)}, in method {str(method)}, do not have type annotations. Please add them.')
+        missing = [arg for arg in fullargs.args if arg not in fullargs.annotations.keys()]
+        raise ValueError(f'Arguments {",".join(missing)}, in method {str(method)}, do not '
+                         'have type annotations. Please add them.')
 
     for extra_arg in extra_arguments:
-        parser.add_argument(extra_arg, type=str, )
+        parser.add_argument(extra_arg, type=str)
 
     required_args_idxs = len(args_annotations) - len(fullargs.defaults if fullargs.defaults else [])
     for idx, (arg, arg_type) in enumerate(args_annotations.items()):
         is_required = idx < required_args_idxs
         assigned_parser = required_parser if is_required else parser
         argument_flag = f"--{arg.replace('_','-')}"
+
+        logger.debug(f'Parser argument {arg}: {arg_type.__name__} '
+                    f'{"(Required)" if is_required else "(Optional)"})')
+
         if isinstance(arg_type, type):
             if issubclass(arg_type, SimpleNamespace):
                 if not is_required:
@@ -283,20 +295,21 @@ def get_parser_from_signature(method: Callable, extra_arguments: List[str] = [])
                                         dest=arg,
                                         type=delimited2list,
                                         required=is_required,
-                                        help=f"indicated as a comma separted string")
+                                        help="indicated as a comma separated string")
                 else:
                     raise TypeError(f'Type {arg_type} is not supported in this version of jobtools')
-            except RuntimeError:
-                raise TypeError(f'Type {arg_type} is not supported in this version of jobtools')
+            except RuntimeError as exc:
+                raise TypeError(f'Type {arg_type} is not supported in this '
+                                'version of jobtools') from exc
 
     return parser
 
-def get_args_from_signature(method: Callable, extra_arguments: List[str] = []) -> Dict[str, Any]:
+def get_args_from_signature(method: Callable, extra_arguments: List[str]) -> Dict[str, Any]:
     """
     Automatically parses all the arguments to match an specific method. The method should
     implement type hinting in order for this to work. All arguments required by the method
     will be also required by the parser. To match bash conventions, arguments with underscore
-    will be parsed as arguments with upperscore. For instance `from_path` will be requested
+    will be parsed as arguments with dash (`-`). For instance `from_path` will be requested
     as `--from-path`. Signature arguments with type `SimpleNamespace` have to be specified
     using a `YAML` file.
 
@@ -311,10 +324,16 @@ def get_args_from_signature(method: Callable, extra_arguments: List[str] = []) -
         The arguments parsed. You can call `method` with `**...` then.
     """
     parser = get_parser_from_signature(method, extra_arguments)
+    parser.add_argument("--debug", help='displays debug information', 
+                                   action='store_true',
+                                   required=False)
 
     arguments_dict = vars(parser.parse_args())
     for extra_arg in extra_arguments:
         arguments_dict.pop(extra_arg)
+
+    if "debug" in arguments_dict.keys():
+        arguments_dict.pop("debug")
 
     return arguments_dict
 
@@ -340,23 +359,25 @@ class TaskArguments():
 
         Parameters
         ----------
-        method: Callabale
+        method: Callable
             The method that the arguments need to match.
 
         Returns
         -------
         Dict[str, Any]:
             The arguments that will be indicated to the method with their corresponding typing
-            conversion in case requried.
+            conversion in case required.
         """
         fullargs = inspect.getfullargspec(method)
         args_annotations = dict(filter(lambda key: key[0] != 'return',
                                 fullargs.annotations.items()))
 
         if len(args_annotations) != len(fullargs.args):
-            missing_annotations = [arg for arg in fullargs.args if arg not in fullargs.annotations.keys()]
-            ValueError(f'Arguments {",".join(missing_annotations)}, in method {str(method)}, do not have type annotations. Please add them.')
-            
+            missing = [arg for arg in fullargs.args if arg not in fullargs.annotations.keys()]
+            raise ValueError(f'Arguments {",".join(missing)}, in method {str(method)}, do not '
+                             'have type annotations. Annotations are required by jobtools to '
+                             'infer types.')
+
         parsed_args = {}
 
         required_args_idxs = len(args_annotations) \
@@ -365,7 +386,7 @@ class TaskArguments():
             is_required = idx < required_args_idxs
 
             if is_required and arg_name not in self.args.keys():
-                ValueError(f"Parameter {arg_name} is not optional")
+                raise ValueError(f"Parameter {arg_name} is required")
 
             if arg_type is type(self.args[arg_name]):
                 parsed_args[arg_name] = self.args[arg_name]

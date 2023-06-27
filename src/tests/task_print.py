@@ -13,5 +13,5 @@ def mytask(name: str, params: SimpleNamespace) -> int:
     return sum
 
 if __name__ == "__main__":
-    tr = jobtools.runner.TaskRunner()
+    tr = jobtools.runner.TaskRunner("test")
     exit(tr.run(mytask))

@@ -16,5 +16,5 @@ def mytask(integer: int, decimal: float, compare_strategy: CompareStrategy, flag
     return 0
 
 if __name__ == "__main__":
-    tr = jobtools.runner.TaskRunner()
+    tr = jobtools.runner.TaskRunner("test")
     exit(tr.run(mytask))

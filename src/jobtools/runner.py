@@ -3,20 +3,25 @@ This module provides orchestration to run and execute Python Jobs from the comma
 """
 from typing import Callable, Any, List
 from jobtools.arguments import TaskArguments, get_args_from_signature, get_parser_from_signature
+from jobtools.joblogger import get_logger
 
 class TaskRunner():
     """
     Allows an easy way to run a task in Azure ML and log any input into the run. Tasks are
-    specifiedas a callable with arguments that are automatically parsed from the signature. The
+    specified a callable with arguments that are automatically parsed from the signature. The
     method should return a dictionary with keys "metrics", "arguments" and "artifacts".
     """
-    def __init__(self, args: TaskArguments = None, ignore_arguments: List[str] = []) -> None:
+
+    def __init__(self, name: str, args: TaskArguments = None, ignore_arguments: List[str] = None,
+                 debug: bool = False) -> None:
         """
         Initializes the TaskRunner. If `args` is indicated, then the argument's won't be parsed
         from the command line. Otherwise they will.
 
         Parameters
         ----------
+        name: str
+            Name of the module or task to run. This property can be any string value.
         args: TaskArguments
             Use args when you are using `TaskRunner` directly in Python instead of from the command
             line. When this argument is indicated, no parsing from command line will happen.
@@ -24,9 +29,14 @@ class TaskRunner():
             Arguments that will be present in the command line but should not be used or enforced
             for the task that will be executed. Defaults to none. This parameter has no effect if
             `args` is indicated.
+        debug: bool
+            Indicates if debug information should be displayed
         """
+        self.name = name
         self.task_arguments = args
-        self.ignore_arguments = ignore_arguments
+        self.ignore_arguments = ignore_arguments or []
+        self.debug = debug
+        self._logger = get_logger(name, debug)
 
     def run(self, task: Callable[[], Any]) -> Any:
         """
@@ -47,8 +57,12 @@ class TaskRunner():
         else:
             args = self.task_arguments.resolve_for_method(task)
 
+        for key, value in args.items():
+            self._logger.debug(f"Argument {key} = {str(value)}")
+
+        self._logger.debug(f"Running method -> {task.__name__}")
         return task(**args)
-    
+
     def display_help(self, task: Callable[[], Any]) -> None:
         """
         Displays the help for a given method
